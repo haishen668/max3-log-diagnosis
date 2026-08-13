@@ -1,0 +1,7 @@
+interface:
+  display_name: "Max3 日志诊断"
+  short_description: "解密 CPE-MAX3/IC5980 加密诊断包，分析设备日志异常，自积累案例"
+  default_prompt: "Use $max3-log-diagnosis to decrypt IC5980/MAX3 diagnostic packages and analyze device-side logs."
+
+policy:
+  allow_implicit_invocation: true

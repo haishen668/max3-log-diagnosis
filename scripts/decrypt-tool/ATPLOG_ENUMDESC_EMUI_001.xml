@@ -1,0 +1,333 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ENUMDESC>
+  <PARA name="DeviceIDType1">
+    <ENUMDEF IMEI="1"></ENUMDEF>
+    <ENUMDEF MEID="2"></ENUMDEF>
+  </PARA>
+  <PARA name="DeviceIDType2">
+    <ENUMDEF IMEI="1"></ENUMDEF>
+    <ENUMDEF MEID="2"></ENUMDEF>
+  </PARA>
+  <PARA name="ChipsetType">
+    <ENUMDEF QUALCOMM="0" desc_chn="高通平台"></ENUMDEF>
+    <ENUMDEF HISILICON="1" desc_chn="海思平台"></ENUMDEF>
+    <ENUMDEF MTK="2" desc_chn="MTK平台"></ENUMDEF>
+    <ENUMDEF INFINEON="3" desc_chn="英飞凌平台"></ENUMDEF>
+    <ENUMDEF SPREADTRUM="4" desc_chn="展讯平台"></ENUMDEF>
+  </PARA>
+  <PARA name="EventId">
+    <ENUMDEF WIFI_START_FAIL="0x10000001" desc_chn="WiFi启动异常，WiFi初始化失败，在启动时检测"></ENUMDEF>
+    <ENUMDEF WIFI_DRV_NOT_RESPONSE_AUTH="0x10000002" desc_chn="WIFI驱动没有回应Auth"></ENUMDEF>
+    <ENUMDEF WIFI_DRV_NOT_RECEIVE_ASSOC="0x10000003" desc_chn="WIFI驱动没有收到ASSOC"></ENUMDEF>
+    <ENUMDEF WIFI_DRV_NOT_RESPONSE_ASSOC="0x10000004" desc_chn="WIFI驱动没有回应ASSOC"></ENUMDEF>
+    <ENUMDEF WIFI_DRV_NOT_SEND_EAPOL_4_1="0x10000005" desc_chn="WIFI驱动没有发送EAPOL4-1"></ENUMDEF>
+    <ENUMDEF WIFI_DRV_NOT_RECEIVE_EAPOL_4_2="0x10000006" desc_chn="WIFI驱动没有收到EAPOL-2"></ENUMDEF>
+    <ENUMDEF WIFI_DRV_NOT_SEND_EAPOL_4_3="0x10000007" desc_chn="WIFI驱动没有发送EAPOL-3"></ENUMDEF>
+    <ENUMDEF WIFI_DRV_NOT_RECEIVE_EAPOL_4_4="0x10000008" desc_chn="WIFI驱动没有收到EAPOL-4"></ENUMDEF>
+    <ENUMDEF WIFI_DRV_RECEIVE_DEAUTH_OR_DEASSOC="0x10000009" desc_chn="WIFI驱动收到了DEAUTH或DEASSOC"></ENUMDEF>
+    <ENUMDEF WIFI_DRV_PKT_DROP_ABNORMAL="0x10000010" desc_chn="WIFI驱动异常丢包事件"></ENUMDEF>
+    <ENUMDEF WIFI_DRV_INTERRUPT_ERR="0x10000011" desc_chn="WIFI驱动错误中断事件"></ENUMDEF>
+    <ENUMDEF WIFI_DRV_FREQ_OFFSET_ABNORMAL="0x10000012" desc_chn="WIFI驱动频率偏移异常事件"></ENUMDEF>
+    <ENUMDEF WIFI_DRV_PCIE_LINK_DOWN="0x10000013" desc_chn="WIFI驱动PCIE_LINK_DOWN事件"></ENUMDEF>
+    <ENUMDEF WIFI_DRV_EXCEPTION="0x1000000A" desc_chn="WIFI驱动异常，比如TX_HANG"></ENUMDEF>
+    <ENUMDEF WIFI_DRV_EXCEPTION_RECOVERY="0x1000000B" desc_chn="WIFI驱动异常，触发底层自愈逻辑"></ENUMDEF>
+    <ENUMDEF WIFI_DRV_EXCEPTION_WARNING="0x1000000C" desc_chn="WIFI驱动异常，告警类不触发底层自愈逻辑"></ENUMDEF>
+    <ENUMDEF WIFI_DRV_PROBE_FAIL="0x1000000D" desc_chn="WIFI驱动初始化失败"></ENUMDEF>
+    <ENUMDEF WIFI_DRV_IFACE_OPEN_FAIL="0x1000000E" desc_chn="WIFI驱动网络接口打开失败"></ENUMDEF>
+    <ENUMDEF WIFI_SSID_DISAPPEAR="0x10000101" desc_chn="wifi信号消失"></ENUMDEF>
+    <ENUMDEF WIFI_OKC_SCAN_INVALID="0x10000201" desc_chn="误触发OKC扫描事件"></ENUMDEF>
+    <ENUMDEF WIFI_STA_SCAN_INVALID="0x10000202" desc_chn="误触发STA扫描事件"></ENUMDEF>
+    <ENUMDEF WIFI_OPTIMIZE_MASTER_SCAN_INVALID="0x10000203" desc_chn="误触发主路由信道扫描事件"></ENUMDEF>
+    <ENUMDEF WIFI_OPTIMIZE_SLAVE_SCAN_INVALID="0x10000204" desc_chn="误触发子路由信道扫描事件"></ENUMDEF>
+    <ENUMDEF HOSTAPD_NOT_RECEIVE_CONN_REQUEST="0x10000301" desc_chn="HOSTAPD没有收到连接请求"></ENUMDEF>
+    <ENUMDEF HOSTAPD_NOT_SEND_EAPOL_4_1="0x10000302" desc_chn="HOSTAPD没有发送EAPOL4-1"></ENUMDEF>
+    <ENUMDEF HOSTAPD_NOT_RECEIVE_EAPOL_4_2="0x10000303" desc_chn="HOSTAPD没有收到EAPOL4-2"></ENUMDEF>
+    <ENUMDEF HOSTAPD_RESEND_EAPOL_4_1_MAXTIMES_SEND_DISASSOC="0x10000304" desc_chn="HOSTAPD重发EAPOL4-1达到最大次数后发送了DISASSOC"></ENUMDEF>
+    <ENUMDEF HOSTAPD_TIMEOUT_RESEND_EAPOL_4_1="0x10000305" desc_chn="HOSTAPD超时重发EAPOL4-1"></ENUMDEF>
+    <ENUMDEF HOSTAPD_NOT_SEND_EAPOL_4_3="0x10000306" desc_chn="HOSTAPD没有发送EAPOL4-3"></ENUMDEF>
+    <ENUMDEF HOSTAPD_CHECK_EAPOL_4_2_FAIL_SEND_DISASSOC="0x10000307" desc_chn="HOSTAPD校验EAPOL4-2失败后发送了DISASSOC"></ENUMDEF>
+    <ENUMDEF HOSTAPD_NOT_RECEIVE_EAPOL_4_4="0x10000308" desc_chn="HOSTAPD没有收到EAPOL4-4"></ENUMDEF>
+    <ENUMDEF HOSTAPD_RESEND_EAPOL_4_3_MAXTIMES_SEND_DISASSOC="0x10000309" desc_chn="HOSTAPD重发EAPOL4-3达到最大次数后发送了DISASSOC"></ENUMDEF>
+    <ENUMDEF HOSTAPD_TIMEOUT_RESEND_EAPOL_4_3="0x1000030A" desc_chn="HOSTAPD超时重发EAPOL4-3"></ENUMDEF>
+    <ENUMDEF HOSTAPD_WIFI_CONNECT_FAIL="0x1000030B" desc_chn="WIFI二层连接失败"></ENUMDEF>
+    <ENUMDEF HOSTAPD_CHECK_EAPOL_4_4_FAIL_SEND_DISASSOC="0x1000030C" desc_chn="HOSTAPD校验EAPOL4-4失败后发送了DISASSOC"></ENUMDEF>
+    <ENUMDEF HOSTAPD_PROCESS_EXCEPTION="0x1000030D" desc_chn="hostapd进程异常事件"></ENUMDEF>
+    <ENUMDEF HOSTAPD_EAPOL_DROP_EXCEPTION="0x1000030E" desc_chn="EAPOL帧丢失故障检测事件"></ENUMDEF>
+    <ENUMDEF WLAN_CONFIG_EXCEPTION="0x10000401" desc_chn="wifi配置异常事件"></ENUMDEF>
+    <ENUMDEF WLAN_USER_MAX_ASSOC="0x10000403" desc_chn="达到最大接入数阈值事件"></ENUMDEF>
+    <ENUMDEF WLAN_CHANNEL_BUSY="0x10000404" desc_chn="空口占满事件"></ENUMDEF>
+    <ENUMDEF WLAN_LINK_QUALITY_POOR="0x10000405" desc_chn="主从链路质量差事件"></ENUMDEF>
+    <ENUMDEF WLAN_HONOR_OF_KINGS_LAG="0x10000406" desc_chn="王者荣耀游戏卡顿事件"></ENUMDEF>
+    <ENUMDEF WLAN_CCA_POWER_ABNORMAL="0x10000407" desc_chn="CCA能量异常事件"></ENUMDEF>
+    <ENUMDEF WLAN_MOBILE_NO_INTERNET="0x10000408" desc_chn="手机无法上网事件"></ENUMDEF>
+    <ENUMDEF WLAN_MOBILE_OFFLINE="0x10000409" desc_chn="手机WIFI掉线事件"></ENUMDEF>
+    <ENUMDEF WLAN_MOBILE_NET_SLOW="0x1000040A" desc_chn="手机WIFI上网慢事件"></ENUMDEF>
+    <ENUMDEF WLAN_EXCEPTION_RECOVERY="0x1000040B" desc_chn="WLAN异常，触发自愈逻辑"></ENUMDEF>
+    <ENUMDEF SMARTHOME_AI_ONTIMER="0x10000501" desc_chn="智能家庭AI特性数据定时上报"></ENUMDEF>
+    <ENUMDEF SMARTHOME_AI_REALTIME="0x10000502" desc_chn="智能家庭AI特性数据定实时上报"></ENUMDEF>
+    <ENUMDEF WIFI_SSID_DISAPPEAR_RTL="0x20000002" desc_chn="SSID 丢失，Beacon发不出去 （会触发Beacon Reset）"></ENUMDEF>
+    <ENUMDEF WIFI_CONN_FAIL="0x10100001" desc_chn="连接失败，长时间设备无法接入，反复失败"></ENUMDEF>
+    <ENUMDEF WIFI_CONN_FAIL_RTL="0x20100001" desc_chn="连接失败，长时间设备无法接入，反复失败"></ENUMDEF>
+    <ENUMDEF WIFI_LONGTIME_DISTURB="0x10100002" desc_chn="长时间干扰，连续30分钟，重传：PER，FA"></ENUMDEF>
+    <ENUMDEF WIFI_LONGTIME_DISTURB_RTL="0x20100002" desc_chn="长时间干扰，连续30分钟，重传：PER，FA"></ENUMDEF>
+    <ENUMDEF WIFI_NEGO_RATE_LOW="0x10300001" desc_chn="协商速率低，空口协商速率过低，影响业务"></ENUMDEF>
+    <ENUMDEF WIFI_NEGO_RATE_LOW_RTL="0x20300001" desc_chn="协商速率低，空口协商速率过低，影响业务"></ENUMDEF>
+    <ENUMDEF WIFI_FLASH_ONOFF="0x10300002" desc_chn="闪断，30S之内，STA下线又上线"></ENUMDEF>
+    <ENUMDEF WIFI_FLASH_ONOFF_RTL="0x20300002" desc_chn="闪断，30S之内，STA下线又上线"></ENUMDEF>
+    <ENUMDEF WIFI_FREQ_CONN="0x10300003" desc_chn="反复连接，短时间内（5分钟）设备反复接入（大于10次）"></ENUMDEF>
+    <ENUMDEF WIFI_FREQ_CONN_RTL="0x20300003" desc_chn="反复连接，短时间内（5分钟）设备反复接入（大于10次）"></ENUMDEF>
+    <ENUMDEF WIFI_CONN_FAIL_P="0x10500002" desc_chn="连接失败，长时间设备无法接入"></ENUMDEF>
+    <ENUMDEF WIFI_SPEED_LOW="0x10500003" desc_chn="WIFI速率低相关事件，比如buffer满"></ENUMDEF>
+    <ENUMDEF WIFI_FLASH_ONOFF_P="0x10500007" desc_chn="闪断，30S之内，STA下线又上线"></ENUMDEF>
+    <ENUMDEF WIFI_WEAK_SIGNAL_FLASH_ONOFF="0x10500008" desc_chn="因为弱信号的闪断，30S之内，STA下线又上线"></ENUMDEF>
+    <!--<ENUMDEF WIFI_WORK_STATUS="0x10500009" desc_chn="WIFI环境信息上报"></ENUMDEF>-->
+    <ENUMDEF WIFI_STA_DISCONNECT="0x1050000A" desc_chn="sta掉线事件"></ENUMDEF>
+    <ENUMDEF WIFI_STA_DEAUTH="0x1050000B" desc_chn="sta发生deauth事件"></ENUMDEF>
+    <ENUMDEF HILINK_FBD_FBT="0x10400001" desc_chn="由于某些网卡不受Hilink控制，在FBT时会被忽略，这种异常需要上报并记录"></ENUMDEF>
+    <ENUMDEF HILINK_FBD_FBT_FREQ="0x10400002" desc_chn="短时间内（30分钟）连续出现多次切换失败（2次）"></ENUMDEF>
+    <ENUMDEF HILINK_PERIODIC_BTM="0x10400003" desc_chn="周期性上报HiLink记录智联切换信息"></ENUMDEF>
+    <ENUMDEF HILINK_WEAK_INFO="0x10400004" desc_chn="周期性上报wifi链路质量检测"></ENUMDEF>
+    <ENUMDEF HILINK_BTM_PINGPONG="0x10400005" desc_chn="检测到网卡发生智联乒乓切换"></ENUMDEF>
+    <ENUMDEF HILINK_BTM_PROTECT="0x10400006" desc_chn="网卡发生切换保护状态变更"></ENUMDEF>
+    <ENUMDEF HILINK_ABPA_PROTECT="0x10400007" desc_chn="网卡发生接入保护状态变更"></ENUMDEF>
+    <ENUMDEF HILINK_MULTI_SCAN_PROTECT="0x10400008" desc_chn="网卡发生频繁扫描保护状态变更"></ENUMDEF>
+    <ENUMDEF HILINK_HEARTBEAT_FAILED="0x10400009" desc_chn="心跳失败"></ENUMDEF>
+    <ENUMDEF HILINK_COMM_FAILED="0x1040000A" desc_chn="主从通信失败"></ENUMDEF>
+    <ENUMDEF HILINK_LINK_CHANGE="0x1040000B" desc_chn="链路切换"></ENUMDEF>
+    <ENUMDEF HILINK_STA_FREQ_CONN="0x1040000C" desc_chn="WiFi频繁上下线"></ENUMDEF>
+    <ENUMDEF HILINK_SLAVE_ONLINE_TIMEOUT="0x1040000D" desc_chn="从路由智联上线超时"></ENUMDEF>
+    <ENUMDEF HILINK_SWITCH_ABNORMAL="0x13000101" desc_chn="有线链路切换其它链路事件"></ENUMDEF>
+    <ENUMDEF HILINK_BDNG_NTWK_LINK_INFO="0x13000102" desc_chn="周期性上报路由器的组网及bonding链路信息"></ENUMDEF>
+    <ENUMDEF HILINK_BDNG_LINK_STATE_CHG="0x13000103" desc_chn="bonding组网链路状态变化(断开连接，恢复连接)事件"></ENUMDEF>
+    <ENUMDEF WIFI_SCAN_2G_RESULT="0x1050000c" desc_chn="发生扫描动作时，上报扫描到的2.4G周边环境信息"></ENUMDEF>
+    <ENUMDEF WIFI_SCAN_5G_RESULT="0x1050000d" desc_chn="发生扫描动作时，上报扫描到的5G周边环境信息"></ENUMDEF>
+    <ENUMDEF WIFI_CHANNEL_OPTIMIZE="0x1050000e" desc_chn="夜间信道自动优化上报"></ENUMDEF>
+    <ENUMDEF WIFI_GAME_GLORY_STUCK="0x10500011" desc_chn="王者荣耀卡顿事件"></ENUMDEF>
+    <ENUMDEF WIFI_CONN_FAIL_NEW="0x10600002" desc_chn="连接失败，长时间设备无法接入 (重新适配了新结构体，增加海思芯片适配)"></ENUMDEF>
+    <ENUMDEF WIFI_SPEED_LOW_NEW="0x10600003" desc_chn="WIFI速率低相关事件，比如buffer满 (重新适配了新结构体，增加海思芯片适配)"></ENUMDEF>
+    <ENUMDEF WIFI_EXCEPTION_NEW="0x10600006" desc_chn="WIFI驱动异常，比如TX_HANG (重新适配了新结构体，增加海思芯片适配)"></ENUMDEF>
+    <ENUMDEF WIFI_STA_DISCONNECT_NEW="0x1060000A" desc_chn="sta掉线事件 (重新适配了新结构体，增加海思芯片适配)"></ENUMDEF>
+    <ENUMDEF WIFI_STA_DEAUTH_NEW="0x1060000B" desc_chn="sta发生deauth事件 (重新适配了新结构体，增加海思芯片适配)"></ENUMDEF>
+    <ENUMDEF BDNG_NTWK_LINK_INFO="0x10700001" desc_chn="周期性上报路由器的组网及bonding链路信息"></ENUMDEF>
+    <ENUMDEF BDNG_LINK_STATE_CHG="0x10700002" desc_chn="bonding组网链路状态变化(断开连接，恢复连接)事件"></ENUMDEF>
+    <ENUMDEF SYSTEM_CMS_EXITED="0x12000001" desc_chn="系统cms进程退出"></ENUMDEF>
+    <ENUMDEF SYSTEM_COREDUMP="0x12000002" desc_chn="系统进程段错误"></ENUMDEF>
+    <ENUMDEF SYSTEM_REBOOT="0x12000003" desc_chn="系统重启"></ENUMDEF>
+    <ENUMDEF SYSTEM_REPORT_ONTIMER="0x12000004" desc_chn="系统定时上报数据"></ENUMDEF>
+    <ENUMDEF SYSTEM_MANUAL_FEEDBACK="0x12000005" desc_chn="页面手动上传"></ENUMDEF>
+    <ENUMDEF SYSTEM_MEMORY_OVERLOAD="0x12000006" desc_chn="系统进程内存监控预警"></ENUMDEF>
+    <ENUMDEF SYSTEM_JAVA_EXITED="0x12000007" desc_chn="系统JAVA进程退出事件"></ENUMDEF>
+    <ENUMDEF SYSTEM_FILES_OVERLOAD="0x12000008" desc_chn="系统/var目录文件大小监控事件"></ENUMDEF>
+    <ENUMDEF SYSTEM_BETACLUB_FEEDBACK="0x12000009" desc_chn="BetaClub上传chrlog"></ENUMDEF>
+    <ENUMDEF SYSTEM_CPUINFO_TOTAL_ONTIMER="0x1200000B" desc_chn="总CPU占用信息定时上报事件"></ENUMDEF>
+    <ENUMDEF SYSTEM_CPUINFO_TOTAL_OVERLOAD="0x1200000C" desc_chn="总CPU占用超出阈值事件"></ENUMDEF>
+    <ENUMDEF SYSTEM_CPUINFO_PROCESS_OVERLOAD="0x1200000D" desc_chn="单个进程CPU占用超出阈值事件"></ENUMDEF>
+    <ENUMDEF SYSTEM_SLABINFO_TOTAL_OVERLOAD="0x1200000E" desc_chn="内核slab占用超出阈值事件"></ENUMDEF>
+    <ENUMDEF SYSTEM_PROCESS_TOTAL_COUNTS_OVERLOAD="0x1200000F" desc_chn="系统进程总数量超出阈值事件"></ENUMDEF>
+    <ENUMDEF SYSTEM_PROCESS_SAME_COUNTS_OVERLOAD="0x12000010" desc_chn="相同名称进程数量超出阈值事件"></ENUMDEF>
+    <ENUMDEF SYSTEM_PROCESS_STATE_ABNORMAL="0x12000011" desc_chn="进程状态异常事件"></ENUMDEF>
+    <ENUMDEF SYSTEM_MLOG_UPLOAD_ONTIMER="0x12000012" desc_chn="周期性上报mlog信息"></ENUMDEF>
+    <ENUMDEF SYSTEM_ERROR_CODE_LOG="0x12000013" desc_chn="log编码有误"></ENUMDEF>
+    <ENUMDEF SYSTEM_DEVICEINFO_REPORT_INFO="0x12000014" desc_chn="deviceinfo上报信息"></ENUMDEF>
+    <ENUMDEF SYSTEM_SYSTEM_WANUP_POINT="0x12000015" desc_chn="wan up稳定后打点信息"></ENUMDEF>
+    <ENUMDEF SYSTEM_PROCESS_CPU_TIMEOUT="0x12000016" desc_chn="进程连续运行时间超过限制"></ENUMDEF>
+    <ENUMDEF SYSTEM_REPORT_RELATED="0x12000017" desc_chn="关联路由器上报事件"></ENUMDEF>
+    <ENUMDEF SYSTEM_CFG_LOAD_ERR="0x12000018" desc_chn="配置加载异常事件"></ENUMDEF>
+    <ENUMDEF SYSTEM_BETAPLAN_FEEDBACK="0x12000019" desc_chn="betaPlan事件"></ENUMDEF>
+    <ENUMDEF ETH_NEGOTIATION_SPEED_LOW="0x13000001" desc_chn="协商速率低"></ENUMDEF>
+    <ENUMDEF ETH_LINK_DOWN="0x13000002" desc_chn="ETH口断开"></ENUMDEF>
+    <ENUMDEF HILINK_HEARTBEAT_FAIL="0x13000005" desc_chn="心跳失败"></ENUMDEF>
+    <ENUMDEF HILINK_COMM_FAIL="0x13000006" desc_chn="主从通信失败"></ENUMDEF>
+    <ENUMDEF HILINK_LINK_CHANGE="0x13000007" desc_chn="链路切换"></ENUMDEF>
+    <ENUMDEF HILINK_STA_FREQ_CONN="0x13000008" desc_chn="WiFi频繁上下线"></ENUMDEF>
+    <ENUMDEF HILINK_SLAVE_ONLINE_TIMEOUT="0x13000009" desc_chn="从路由智联上线超时"></ENUMDEF>
+    <ENUMDEF SYSTEM_CPU_USAGE_HIGH="0x12000021" desc_chn="CPU占用高事件"></ENUMDEF>
+    <ENUMDEF SYSTEM_MEMORY_USAGE_HIGH="0x12000022" desc_chn="内存占用高事件"></ENUMDEF>
+    <ENUMDEF SYSTEM_HOTA_FAIL="0x12000023" desc_chn="在线升级失败"></ENUMDEF>
+    <ENUMDEF SYSTEM_NPS_INFO="0x12000024" desc_chn="NPS 调查问卷信息上传"></ENUMDEF>
+    <ENUMDEF PLC_DEVICE_LINK_DOWN_DETAIL="0x11000004" desc_chn="PLC设备离线时历史信道质量信息"></ENUMDEF>
+    <ENUMDEF PLC_DEVICE_LINK_UP="0x11000005" desc_chn="PLC设备上线时上报断网时长"></ENUMDEF>
+    <ENUMDEF PLC_ADD_DEVICE_FAIL="0x11000006" desc_chn="PLC配对失败上报"></ENUMDEF>
+    <ENUMDEF PLC_DCAP_DATA_REPORT="0x11000008" desc_chn="PLC信道采集数据上报"></ENUMDEF>
+    <ENUMDEF PLC_HEART_BEAT="0x11000009" desc_chn="PLC心跳丢失及恢复上报"></ENUMDEF>
+    <ENUMDEF PLC_CRASH="0x1100000B" desc_chn="PLC死机及LOG上报"></ENUMDEF>
+    <ENUMDEF PLC_INFO_COLLECTION="0x1100000c" desc_chn="PLC数据采集"></ENUMDEF>
+    <ENUMDEF BSP_PLC_LINK_SWITCH="0x11000101" desc_chn="PLC逃生到2.4GHz"></ENUMDEF>
+    <ENUMDEF BSP_PLC_RATE_LOW="0x11000102" desc_chn="PLC速率低事件"></ENUMDEF>
+    <ENUMDEF BSP_PLC_EP_OFFLINE="0x11000103" desc_chn="PLC的ep掉线事件"></ENUMDEF>
+    <ENUMDEF BSP_PLC_DM_OFFLINE="0x11000104" desc_chn="PLC的dm掉线事件"></ENUMDEF>
+    <ENUMDEF BSP_PLC_FREQ_ABNORMAL="0x11000105" desc_chn="PLC频偏异常事件"></ENUMDEF>
+    <ENUMDEF BSP_PHY_SNR_LOW="0x11000201" desc_chn="PHY信噪比低"></ENUMDEF>
+    <ENUMDEF BSP_PHY_LINK_DOWN="0x11000202" desc_chn="PHY连接断开"></ENUMDEF>
+    <ENUMDEF BSP_PHY_LINK_SPEED_LOW="0x11000203" desc_chn="PHY协商速率低"></ENUMDEF>
+    <ENUMDEF BSP_PHY_STATUS_ISOLATE="0x11000204" desc_chn="PHY隔离状态"></ENUMDEF>
+    <ENUMDEF BSP_PHY_DICONNECT_FREQUENT="0x11000205" desc_chn="物理口闪断事件"></ENUMDEF>
+    <ENUMDEF BSP_PHY_NEGOTIATION_SPEED_LOW="0x11000206" desc_chn="PHY协商速率主动降速"></ENUMDEF>
+    <ENUMDEF BSP_PHY_ETH_LINK_DOWN="0x11000207" desc_chn="ETH口断开"></ENUMDEF>
+    <ENUMDEF BSP_THERMO_STATUS_CHANGED="0x11000301" desc_chn="温度保护状态变化上报"></ENUMDEF>
+    <ENUMDEF BSP_EMMC_WRITE_EXCEED_WARN="0x11000401" desc_chn="单日eMMC写入量超限"></ENUMDEF>
+    <ENUMDEF THERMO_SMART_STATUS_CHANGED="0x15000002" desc_chn="温度保护状态变化上报"></ENUMDEF>
+    <ENUMDEF KERNEL_SLAVE_LOOP="0x15000005" desc_chn="子路由成环事件"></ENUMDEF>
+    <ENUMDEF KERNEL_CONNTRACK_LEAK="0x15000006" desc_chn="连接跟踪资源泄露事件"></ENUMDEF>
+    <ENUMDEF KERNEL_SA_FULL="0x15000007" desc_chn="SA流表满事件"></ENUMDEF>
+    <ENUMDEF KERNEL_CONNTRACK_FULL="0x15000008" desc_chn="连接跟踪满导致申请失败事件"></ENUMDEF>
+    <ENUMDEF WAN_DISCONNECTED="0x16000001" desc_chn="wan掉线"></ENUMDEF>
+    <ENUMDEF WAN_IPV6_UP="0x16000004" desc_chn="wan ipv6开启"></ENUMDEF>
+    <ENUMDEF WAN_PORT_FAULT="0x16000005" desc_chn="wan口识别异常"></ENUMDEF>
+    <ENUMDEF WAN_DIAG_EVENT_UP="0x16000006" desc_chn="wan 诊断模型上报信息"></ENUMDEF>
+    <ENUMDEF DNS_DETECT_EVENT="0x16000009" desc_chn="wan口快速拔插，dns探测时长"></ENUMDEF>
+    <ENUMDEF SPEEDTEST_WAN_FAIL_EVENT="0x1600000A" desc_chn="网络测速WAN侧测速失败事件"></ENUMDEF>
+    <ENUMDEF WAN_DEFAULT_ROUTE_ABNORMAL="0x1600000B" desc_chn="默认路由异常事件"></ENUMDEF>
+    <ENUMDEF DHCPS_STA_GET_IP_FAIL="0x16000101" desc_chn="sta获取ip地址失败"></ENUMDEF>
+    <ENUMDEF IPCHECK_STA_ONLINE_FAIL="0x16000201" desc_chn="hostmap上线失败"></ENUMDEF>
+    <ENUMDEF FLASH_BASIC_INFO="0x14000001" desc_chn="flash 基本信息"></ENUMDEF>
+    <ENUMDEF FLASH_EC_WARN="0x14000002" desc_chn="flash 擦除频繁"></ENUMDEF>
+    <ENUMDEF FLASH_DRV_ERR="0x14000003" desc_chn="Flash驱动错误"></ENUMDEF>
+    <ENUMDEF FLASH_BADBLOCK_WARN="0x14000004" desc_chn="新坏块"></ENUMDEF>
+    <ENUMDEF FLASH_MOUNT_ERR="0x14000005" desc_chn="文件系统mount失败"></ENUMDEF>
+    <ENUMDEF FLASH_CFG_INFO="0x14000006" desc_chn="配置备份恢复"></ENUMDEF>
+    <ENUMDEF FLASH_E_INTERVAL_WARN="0x14000007" desc_chn="擦除间隔告警"></ENUMDEF>
+    <ENUMDEF FLASH_DATA_EXCEED_WARN="0x14000008" desc_chn="数据size过大"></ENUMDEF>
+    <ENUMDEF FLASH_IMG_CHECK_WARN="0x14000009" desc_chn="IMAGE校验失败"></ENUMDEF>
+    <ENUMDEF HOTA_FAIL_INFO="0x19000001" desc_chn="在线升级失败"></ENUMDEF>
+    <ENUMDEF NPS_INFO="0x17000001" desc_chn="NPS 调查问卷信息上传"></ENUMDEF>
+    <ENUMDEF MODEM_LTE_REG_REJ="0x21000001" desc_chn="LTE注册被拒"></ENUMDEF>
+    <ENUMDEF MODEM_TAU_REJ="0x21000002" desc_chn="TAU被拒"></ENUMDEF>
+    <ENUMDEF MODEM_LTE_SRV_REQ_REJ="0x21000003" desc_chn="LTE服务请求被拒"></ENUMDEF>
+    <ENUMDEF MODEM_GSM_UMTS_REG_REJ="0x21000004" desc_chn="GU注册被拒"></ENUMDEF>
+    <ENUMDEF MODEM_RAU_REJ="0x21000005" desc_chn="RAU被拒"></ENUMDEF>
+    <ENUMDEF MODEM_LAU_REJ="0x21000006" desc_chn="LAU被拒"></ENUMDEF>
+    <ENUMDEF MODEM_GSM_UMTS_SRV_REQ_REJ="0x21000007" desc_chn="GU服务请求被拒"></ENUMDEF>
+    <ENUMDEF MODEM_MT_DETACH="0x21000008" desc_chn="MT Detach事件"></ENUMDEF>
+    <ENUMDEF MODEM_DIALUP_REJ="0x21000009" desc_chn="拨号被拒事件"></ENUMDEF>
+    <ENUMDEF BSP_STORAGE_IOCTL_BAD_BLOCK="0x22040101" desc_chn="ioctl标记坏块"></ENUMDEF>
+    <ENUMDEF BSP_STORAGE_STRIKE_OUT_BAD_BLOCK="0x22040102" desc_chn="累计三次ECC ERROR"></ENUMDEF>
+    <ENUMDEF BSP_STORAGE_ERASE_ERROR_BAD_BLOCK="0x22040103" desc_chn="擦除失败标记坏块"></ENUMDEF>
+    <ENUMDEF BSP_STORAGE_READ_ERROR_BAD_BLOCK="0x22040104" desc_chn="读失败标记坏块"></ENUMDEF>
+    <ENUMDEF BSP_STORAGE_WRITE_ERROR_BAD_BLOCK="0x22040105" desc_chn="写失败标记坏块"></ENUMDEF>
+    <ENUMDEF BSP_STORAGE_ECC_ERROR="0x22040201" desc_chn="读出现ECC错误"></ENUMDEF>
+    <ENUMDEF BSP_STORAGE_MOUNT_FAILURE="0x22040301" desc_chn="文件系统mount失败"></ENUMDEF>
+    <ENUMDEF BSP_POWER_ABNOMAL_POWER_ON="0x22020101" desc_chn="异常上电原因"></ENUMDEF>
+    <ENUMDEF BBOU_FAIL_INFO="0x24000001" desc_chn="在线升级失败"></ENUMDEF>
+    <ENUMDEF STATISTIC_REPORT_FAIL_INFO="0x25000001" desc_chn="流量上报云端失败"></ENUMDEF>
+    <ENUMDEF LPM_INFO="0x26000001" desc_chn="低功耗打点信息"></ENUMDEF>
+    <ENUMDEF CENTRAL_FOUNDATION_EVENT="0x1040000E" desc_chn="中枢基础服务事件"></ENUMDEF>
+    <ENUMDEF CENTRAL_FEATURE_EVENT="0x1040000F" desc_chn="中枢特性服务事件"></ENUMDEF>
+    <ENUMDEF CENTRAL_LINK_MANAGER_EVENT="0x10400010" desc_chn="中枢链路管理事件"></ENUMDEF>
+    <ENUMDEF DFX_DETECT_CONN_FAIL_EVENT="0x18000001" desc_chn="wifi连接失败事件"></ENUMDEF>
+    <ENUMDEF DFX_DETECT_RADIO_EXCEPTION_EVENT="0x18000003" desc_chn="射频硬件异常事件"></ENUMDEF>
+    <ENUMDEF DFX_CONNTRACK_FULL_EVENT="0x18000031" desc_chn="连接跟踪满导致申请失败事件"></ENUMDEF>
+    <ENUMDEF DFX_DETECT_SKB_DROP_EVENT="0x18000032" desc_chn="协议报文内核丢包检测事件"></ENUMDEF>
+    <ENUMDEF SMARTHOME_BIND_EVENT="0x1A000001" desc_chn="绑定路由事件"></ENUMDEF>
+    <ENUMDEF ACELITE_CALL_API_ERR_EVENT="0x1A000101" desc_chn="调用hap api失败"></ENUMDEF>
+    <ENUMDEF ACELITE_HAP_EXIT_EVENT="0x1A000102" desc_chn="hap进程异常退出"></ENUMDEF>
+    <ENUMDEF DFX_PHONE_INET_NOT_AVAILABLE="0x18000043" desc_chn="手机上报无法上网事件事件"></ENUMDEF>
+    <ENUMDEF HOMEDEVICE_SUB_DEVICE_UPDATE_FAILED="0x23000000" desc_chn="子设备升级失败"></ENUMDEF>
+    <ENUMDEF HOMEDEVICE_SUB_DEVICE_CTRL_FAILED="0x23000001" desc_chn="子设备控制指令执行失败"></ENUMDEF>
+    <ENUMDEF HOMEDEVICE_RESTORE_FAILED="0x23000002" desc_chn="恢复交房操作失败，网关CHR上报失败及原因"></ENUMDEF>
+    <ENUMDEF HOMEDEVICE_SCENE_CONFIGURE_FAIL_EVENT="0x23000003" desc_chn="智能网关场景管理用户配置场景失败事件"></ENUMDEF>
+    <ENUMDEF HOMEDEVICE_SUB_DEVICE_FAN_STATUS_FAILED="0x23000004" desc_chn="风扇状态异常上报信息"></ENUMDEF>
+    <ENUMDEF HOMEDEVICE_SUB_DEVICE_ADC_TEM_PROTECT="0x23000005" desc_chn="箱体温度超过温保门限上报信息"></ENUMDEF>
+    <ENUMDEF PLCIOT_3921_HARDWARE_FAULT="0x27000000" desc_chn="CCO硬件故障，CHR上报故障及原因码"></ENUMDEF>
+    <ENUMDEF DFX_SYSTEM_CPU_HIGH_USAGE_EVENT="0x18000100" desc_chn="CPU占用高事件"></ENUMDEF>
+    <ENUMDEF DFX_SYSTEM_MEMORY_HIGH_USAGE_EVENT="0x18000101" desc_chn="内存占用高事件"></ENUMDEF>
+    <ENUMDEF DFX_BSP_PHY_FREQUENT_DICONNECT_EVENT="0x18000400" desc_chn="物理口闪断事件"></ENUMDEF>
+    <ENUMDEF DFX_PLC_LINK_SWITCH_EVENT="0x18000500" desc_chn="PLC逃生到2.4GHz"></ENUMDEF>
+    <ENUMDEF DFX_PLC_LOW_RATE_EVENT="0x18000501" desc_chn="PLC速率低事件"></ENUMDEF>
+    <ENUMDEF AILINK_UNASSOC_STA_METRIC_FREQ="0x13000201" desc_chn="频繁混杂侦听事件"></ENUMDEF>
+    <ENUMDEF DHCPS_IP_POOL_FULL="0x16000102" desc_chn="ip地址池满事件"></ENUMDEF>
+    <ENUMDEF DHCPS_LAN_WAN_CONFLICT="0x16000103" desc_chn="LAN/WAN地址冲突避让失败事件"></ENUMDEF>
+    <ENUMDEF IPCHECK_IP_CONFLICT="0x16000202" desc_chn="ip地址冲突事件"></ENUMDEF>
+    <ENUMDEF PPPOE_KICKOUT_WITHOUT_REDIAL="0x16000301" desc_chn="PPPOE拨号被踢掉后未重连"></ENUMDEF>
+    <ENUMDEF KERNEL_PROTOCOL_PKT_DROP="0x15000003" desc_chn="协议报文内核丢包检测事件"></ENUMDEF>
+  </PARA>
+  <PARA name="deauth_reason">
+    <ENUMDEF DEAUTH_REASON_0=" 0" desc_chn="Reserved"></ENUMDEF>
+    <ENUMDEF DEAUTH_REASON_1=" 1" desc_chn="Unspecified reason"></ENUMDEF>
+    <ENUMDEF DEAUTH_REASON_2=" 2" desc_chn="Previous authentication no longer valid"></ENUMDEF>
+    <ENUMDEF DEAUTH_REASON_3=" 3" desc_chn="station is leaving (or has left) IBSS or ESS"></ENUMDEF>
+    <ENUMDEF DEAUTH_REASON_4=" 4" desc_chn="Disassociated due to inactivity"></ENUMDEF>
+    <ENUMDEF DEAUTH_REASON_5=" 5" desc_chn="Disassociated because AP is unable to handle all currently associated stations"></ENUMDEF>
+    <ENUMDEF DEAUTH_REASON_6=" 6" desc_chn="Class 2 frame received from nonauthenticated station"></ENUMDEF>
+    <ENUMDEF DEAUTH_REASON_7=" 7" desc_chn="Class 3 frame received from nonassociated station"></ENUMDEF>
+    <ENUMDEF DEAUTH_REASON_8=" 8" desc_chn="Disassociated because sending station is leaving (or has left) BSS"></ENUMDEF>
+    <ENUMDEF DEAUTH_REASON_9=" 9" desc_chn="Station requesting (re)association is not authenticated with responding station"></ENUMDEF>
+    <ENUMDEF DEAUTH_REASON_10=" 10" desc_chn="Disassociated because the information in the Power Capability element is unacceptable"></ENUMDEF>
+    <ENUMDEF DEAUTH_REASON_11=" 11" desc_chn="Disassociated because the information in the Supported Channels element is unacceptable"></ENUMDEF>
+    <ENUMDEF DEAUTH_REASON_13=" 13" desc_chn="Invalid information element, i.e., an information element defined in this standard for which the content does not meet the specifications in Clause 7"></ENUMDEF>
+    <ENUMDEF DEAUTH_REASON_14=" 14" desc_chn="Message integrity code (MIC) failure"></ENUMDEF>
+    <ENUMDEF DEAUTH_REASON_15=" 15" desc_chn="4-Way Handshake timeout"></ENUMDEF>
+    <ENUMDEF DEAUTH_REASON_16=" 16" desc_chn="Group Key Handshake timeout"></ENUMDEF>
+    <ENUMDEF DEAUTH_REASON_17=" 17" desc_chn="Information element in 4-Way Handshake different from (Re)Association Request/Probe Response/Beacon frame"></ENUMDEF>
+    <ENUMDEF DEAUTH_REASON_18=" 18" desc_chn="Invalid group cipher"></ENUMDEF>
+    <ENUMDEF DEAUTH_REASON_19=" 19" desc_chn="Invalid pairwise cipher"></ENUMDEF>
+    <ENUMDEF DEAUTH_REASON_20=" 20" desc_chn="Invalid AKMP"></ENUMDEF>
+    <ENUMDEF DEAUTH_REASON_21=" 21" desc_chn="Unsupported RSN information element version"></ENUMDEF>
+    <ENUMDEF DEAUTH_REASON_22=" 22" desc_chn="Invalid RSN information element capabilities"></ENUMDEF>
+    <ENUMDEF DEAUTH_REASON_23=" 23" desc_chn="IEEE 802.1X authentication failed"></ENUMDEF>
+    <ENUMDEF DEAUTH_REASON_24=" 24" desc_chn="Cipher suite rejected because of the security policy"></ENUMDEF>
+    <ENUMDEF DEAUTH_REASON_32=" 32" desc_chn="Disassociated for unspecified, QoS-related reason"></ENUMDEF>
+    <ENUMDEF DEAUTH_REASON_33=" 33" desc_chn="Disassociated because QAP lacks sufficient bandwidth for this QSTA"></ENUMDEF>
+    <ENUMDEF DEAUTH_REASON_34=" 34" desc_chn="Disassociated because excessive number of frames need to be acknowledged, but are not acknowledged due to AP transmissions and/or poor channel conditions"></ENUMDEF>
+    <ENUMDEF DEAUTH_REASON_35=" 35" desc_chn="Disassociated because QSTA is transmitting outside the limits of its TXOPs"></ENUMDEF>
+    <ENUMDEF DEAUTH_REASON_36=" 36" desc_chn="Requested from peer QSTA as the QSTA is leaving the QBSS (or resetting)"></ENUMDEF>
+    <ENUMDEF DEAUTH_REASON_37=" 37" desc_chn="Requested from peer QSTA as it does not want to use the mechanism"></ENUMDEF>
+    <ENUMDEF DEAUTH_REASON_38=" 38" desc_chn="Requested from peer QSTA as the QSTA received frames using the mechanism for whicha setup is required"></ENUMDEF>
+    <ENUMDEF DEAUTH_REASON_39=" 39" desc_chn="Requested from peer QSTA due to timeout"></ENUMDEF>
+    <ENUMDEF DEAUTH_REASON_40=" 40" desc_chn="Peer QSTA does not support the requested cipher suite"></ENUMDEF>
+  </PARA>
+  <PARA name="RebootType">
+    <ENUMDEF REBOOT_TYPE_UNKNOWN="0" desc_chn="未知重启"></ENUMDEF>
+    <ENUMDEF REBOOT_TYPE_CLI="1" desc_chn="通过CLI重启"></ENUMDEF>
+    <ENUMDEF REBOOT_TYPE_UPNP="2" desc_chn="通过Hilink UPNP重启"></ENUMDEF>
+    <ENUMDEF REBOOT_TYPE_WEB="3" desc_chn="通过WEB重启"></ENUMDEF>
+    <ENUMDEF REBOOT_TYPE_HOTA="4" desc_chn="HOTA升级重启"></ENUMDEF>
+    <ENUMDEF REBOOT_TYPE_UPG="5" desc_chn="普通UPG升级重启"></ENUMDEF>
+    <ENUMDEF REBOOT_TYPE_CWMP="6" desc_chn="通过CWMP重启"></ENUMDEF>
+    <ENUMDEF REBOOT_TYPE_BUTTON="7" desc_chn="按键重启"></ENUMDEF>
+    <ENUMDEF REBOOT_TYPE_LAN="8" desc_chn="通过LAN重启"></ENUMDEF>
+    <ENUMDEF REBOOT_TYPE_RESTORE="9" desc_chn="恢复出厂重启"></ENUMDEF>
+    <ENUMDEF REBOOT_TYPE_POWEROFF="10" desc_chn="断电重启"></ENUMDEF>
+    <ENUMDEF REBOOT_TYPE_MULTIUPG="11" desc_chn="组播重启"></ENUMDEF>
+    <ENUMDEF REBOOT_TYPE_ALARM="12" desc_chn="定时重启"></ENUMDEF>
+    <ENUMDEF REBOOT_TYPE_PANIC="13" desc_chn="panic重启"></ENUMDEF>
+    <ENUMDEF REBOOT_TYPE_WATCHDOG="14" desc_chn="watchdog重启"></ENUMDEF>
+    <ENUMDEF REBOOT_TYPE_OOM="15" desc_chn="out_of_memory重启"></ENUMDEF>
+    <ENUMDEF REBOOT_TYPE_TINYUPG="16" desc_chn="小系统升级重启"></ENUMDEF>
+    <ENUMDEF REBOOT_TYPE_SBB_TFTP="17" desc_chn="SBB_TFTP重启"></ENUMDEF>
+    <ENUMDEF REBOOT_TYPE_SBB_MODE="18" desc_chn="SBB_MODE重启"></ENUMDEF>
+    <ENUMDEF REBOOT_TYPE_SBB_RANDOM="19" desc_chn="SBB_RANDOM重启"></ENUMDEF>
+    <ENUMDEF REBOOT_TYPE_PLC="20" desc_chn="PLC重启"></ENUMDEF>
+    <ENUMDEF REBOOT_TYPE_VOICE_CTRL="21" desc_chn="语音控制重启"></ENUMDEF>
+    <ENUMDEF REBOOT_TYPE_CFM_RECOVER="22" desc_chn="恢复配置重启"></ENUMDEF>
+    <ENUMDEF REBOOT_TYPE_WIFI1152="23" desc_chn="WIFI1152重启"></ENUMDEF>
+  </PARA>
+  <PARA name="Reason">
+    <ENUMDEF HISI_ISOLATE="0" desc_chn="HISI芯片触发了isolate机制"></ENUMDEF>
+    <ENUMDEF OPPOSITE_DEVICE_ABILITY_100M="1" desc_chn="对端网卡能力100M"></ENUMDEF>
+    <ENUMDEF OPPOSITE_DEVICE_ABILITY_10M="2" desc_chn="对端网卡能力10M"></ENUMDEF>
+    <ENUMDEF PHY_REG_CONFIG_ERROR="3" desc_chn="PHY寄存器配置错误"></ENUMDEF>
+    <ENUMDEF CRC_ERROR="4" desc_chn="CRC错误"></ENUMDEF>
+    <ENUMDEF SWITCH_FORWARD_ERR="5" desc_chn="switch转发错误"></ENUMDEF>
+    <ENUMDEF DRIVER_FORWARD_ERR="6" desc_chn="驱动过程丢包"></ENUMDEF>
+    <ENUMDEF RX_TX_NOT_SUITABLE="7" desc_chn="主从分配不合理"></ENUMDEF>
+    <ENUMDEF DATA_DIRCTION_NOT="8" desc_chn="收发方向不合理"></ENUMDEF>
+    <ENUMDEF RX_FCS_ERR="9" desc_chn="RxFcErr"></ENUMDEF>
+    <ENUMDEF RX_ALIGN_ERR="10" desc_chn="RxAlignErr"></ENUMDEF>
+    <ENUMDEF NONE_DEVICE_LINK_UP="100" desc_chn="没有PLC设备上线"></ENUMDEF>
+    <ENUMDEF PAIR_OPERATION_TIMEOUT="101" desc_chn="PLC配对超时"></ENUMDEF>
+    <ENUMDEF INVALID_DEK="102" desc_chn="无效的DEK"></ENUMDEF>
+    <ENUMDEF INVALID_MAC="103" desc_chn="无效的MAC"></ENUMDEF>
+    <ENUMDEF PHY_RATE_LOW="104" desc_chn="phy rate低"></ENUMDEF>
+    <ENUMDEF TEMP_RAISE="200" desc_chn="温度上升"></ENUMDEF>
+    <ENUMDEF TEMP_FALL="201" desc_chn="温度下降"></ENUMDEF>
+    <ENUMDEF TEMP_GET_FAILL="202" desc_chn="温度读取失败"></ENUMDEF>
+    <ENUMDEF TEMP_OUT_SOCE="203" desc_chn="温度值超出范围"></ENUMDEF>
+  </PARA>
+  <PARA name="SpeedMode">
+    <ENUMDEF MODE_SPEED_ATUO="0" desc_chn="AUTO"></ENUMDEF>
+    <ENUMDEF MODE_SPEED_1000M="1" desc_chn="1000M"></ENUMDEF>
+    <ENUMDEF MODE_SPEED_100M="2" desc_chn="100M"></ENUMDEF>
+    <ENUMDEF MODE_SPEED_10M="3" desc_chn="10M"></ENUMDEF>
+  </PARA>
+</ENUMDESC>
