@@ -400,7 +400,7 @@ function Unprotect-DiagnoseContainer {
 
     $version = [int]$container[8]
     $rsaLength = if ($version -eq 3) { 384 } else { 256 }
-    $keyFile = if ($version -eq 3) { 'rsa-3072.pem' } else { 'rsa-2048.pem' }
+    $keyFile = if ($version -eq 3) { 'rsa-3072.txt' } else { 'rsa-2048.txt' }
     $keyPath = Join-Path $keysDir $keyFile
     if (-not (Test-Path -LiteralPath $keyPath -PathType Leaf)) {
         throw "Compatibility key file not found: $keyPath"
