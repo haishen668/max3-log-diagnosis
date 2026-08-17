@@ -17,7 +17,7 @@
 | 拨号 | `DIALUP_STATE_DISCONNECTED` | 数据连接断开 |
 | 拨号 | `AtpDialupConnectStart` | 开始重拨 |
 | 拨号 | `ndisstat ipv4Status = 0/3/6` | 断开 / 已连接 / 连接中 |
-| Modem | `No data from NAS` | 主控读取 NAS 状态无响应 |
+| Modem | `No data from NAS` | NAS 查询未返回预期数据；可能涉及查询接口、模组控制通道或固件日志路径，必须与注册、拨号和业务状态联合判断 |
 | MQTT | `wj_mqtt` / `WJMqttConnect` | 设备厂商云通道，不等于用户 MQTT 平台 |
 | 闪存 | `jffs2_sum_write_data: Summary too big` | 常见非致命 JFFS2 警告，需结合其他错误判断 |
 
@@ -30,6 +30,8 @@
 3. 对齐 `sysmode`、`no service`、`CEREG`、拨号状态和重拨事件。
 4. 最后对齐 MQTT/TCP 或业务平台事件，判断业务离线是结果还是独立故障。
 5. 结论中列出能确认、不能确认和需要补采的数据。
+
+先建立本次日志事实和反证，再匹配案例库，避免根据案例标题选择性取证。轮转日志可能重叠，关键词命中次数是物理记录数，不直接等于故障次数。
 
 判断换小区或换基站至少需要连续的 PCI、EARFCN、ECI/Cell ID、TAC 等数据。只有 `sysmode`、信号等级或 `no service` 时，不得断言发生换基站。
 

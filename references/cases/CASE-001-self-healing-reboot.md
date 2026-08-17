@@ -3,8 +3,8 @@
 - 设备：IC5980 / CPE-MAX3，固件 `11.0.0.185(H72SP1C00)`
 - 症状：设备不定期重启，业务中断
 - 机制：WebUI“高级设置 → 系统 → 网络检测”定时 ping 目标地址；持续不可达时按配置触发自愈重启
-- 证据：`abnormal reboot=> system self-healing`、`stop feed watchdog`、`Restarting system`
+- 证据：`abnormal reboot=> system self-healing`、`stop feed watchdog`、`Restarting system`可以确认受控自愈重启序列
 - 建议：检查检测目标的稳定性和 ICMP 可达性；根据业务容忍度调整或关闭网络检测；继续排查造成真实断网的注册、拨号、信号、SIM 和供电问题
-- 边界：锁频段或锁小区不能修复网络检测机制本身
+- 边界：上述日志不能单独证明具体 Ping 目标、哪一次探测失败或最初断网原因；锁频段或锁小区不能修复网络检测机制本身
 - 验证状态：触发机制已由用户确认；配置调整效果未验证
 - 日期：2026-08-13

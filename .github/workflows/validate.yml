@@ -1,0 +1,35 @@
+name: validate
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  windows-powershell:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate PowerShell syntax
+        shell: pwsh
+        run: |
+          $failed = $false
+          Get-ChildItem scripts,tests -Recurse -Filter *.ps1 | ForEach-Object {
+            $tokens = $null
+            $errors = $null
+            [System.Management.Automation.Language.Parser]::ParseFile($_.FullName, [ref]$tokens, [ref]$errors) | Out-Null
+            if ($errors.Count) {
+              $failed = $true
+              $errors | Write-Error
+            }
+          }
+          if ($failed) { exit 1 }
+      - name: Run synthetic tool tests
+        shell: pwsh
+        run: ./tests/Test-Max3Tools.ps1
+      - name: Validate skill frontmatter
+        shell: pwsh
+        run: |
+          $content = Get-Content -Raw SKILL.md
+          if ($content -notmatch '(?s)^---\s*\r?\nname:\s*max3-log-diagnosis\s*\r?\ndescription:') {
+            throw 'Invalid SKILL.md frontmatter.'
+          }

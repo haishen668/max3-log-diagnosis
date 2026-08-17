@@ -49,6 +49,9 @@ if (-not $OutDir) {
 $baseName = [IO.Path]::GetFileNameWithoutExtension($InputPath)
 $work = Join-Path ([IO.Path]::GetTempPath()) ("max3-lite-{0}" -f [guid]::NewGuid().ToString('N'))
 $keysDir = Join-Path $PSScriptRoot 'keys'
+$maxArchiveEntries = 50000
+[long]$maxArchiveEntryBytes = 2GB
+[long]$maxArchiveExpandedBytes = 4GB
 
 function Read-StreamExactly {
     param(
@@ -115,6 +118,21 @@ function Get-TarNumber {
     } catch {
         throw "Invalid tar numeric field: '$text'"
     }
+}
+
+function Test-TarHeaderChecksum {
+    param([Parameter(Mandatory)][byte[]]$Header)
+
+    $stored = Get-TarNumber -Buffer $Header -Offset 148 -Length 8
+    [long]$sum = 0
+    for ($index = 0; $index -lt 512; $index++) {
+        if ($index -ge 148 -and $index -lt 156) {
+            $sum += 32
+        } else {
+            $sum += $Header[$index]
+        }
+    }
+    return $stored -eq $sum
 }
 
 function Read-TarPayloadBytes {
@@ -240,6 +258,9 @@ function Expand-TarStream {
     [IO.Directory]::CreateDirectory($Destination) | Out-Null
     [byte[]]$header = [byte[]]::new(512)
     $pendingPath = $null
+    $entryCount = 0
+    [long]$expandedBytes = 0
+    $writtenFiles = [Collections.Generic.HashSet[string]]::new([StringComparer]::OrdinalIgnoreCase)
 
     while (Read-StreamExactly -Stream $Stream -Buffer $header -Offset 0 -Count 512 -AllowEndOfStream) {
         $hasContent = $false
@@ -252,6 +273,14 @@ function Expand-TarStream {
         if (-not $hasContent) {
             break
         }
+        if (-not (Test-TarHeaderChecksum -Header $header)) {
+            throw 'Tar header checksum validation failed.'
+        }
+
+        $entryCount++
+        if ($entryCount -gt $maxArchiveEntries) {
+            throw "Tar entry limit exceeded: $maxArchiveEntries"
+        }
 
         $name = Get-TarString -Buffer $header -Offset 0 -Length 100
         $prefix = Get-TarString -Buffer $header -Offset 345 -Length 155
@@ -260,6 +289,13 @@ function Expand-TarStream {
         }
         $size = Get-TarNumber -Buffer $header -Offset 124 -Length 12
         $typeFlag = [char]$header[156]
+        if ($size -gt $maxArchiveEntryBytes) {
+            throw "Tar entry is larger than the allowed limit: $size bytes"
+        }
+        $expandedBytes += $size
+        if ($expandedBytes -gt $maxArchiveExpandedBytes) {
+            throw "Tar expanded-size limit exceeded: $maxArchiveExpandedBytes bytes"
+        }
 
         if ($typeFlag -eq 'L') {
             $longNameData = Read-TarPayloadBytes -Stream $Stream -Size $size
@@ -286,6 +322,9 @@ function Expand-TarStream {
             [IO.Directory]::CreateDirectory($directoryPath) | Out-Null
         } elseif ($typeFlag -eq '0' -or $typeFlag -eq [char]0) {
             $filePath = Get-SafeTarTargetPath -Destination $Destination -EntryPath $entryPath
+            if (-not $writtenFiles.Add($filePath)) {
+                throw "Duplicate tar output path: '$entryPath'"
+            }
             $parent = [IO.Path]::GetDirectoryName($filePath)
             if ($parent) {
                 [IO.Directory]::CreateDirectory($parent) | Out-Null
@@ -366,7 +405,28 @@ function Get-DiagnoseEncPath {
     $head = [Text.Encoding]::ASCII.GetString($bytes, 0, [Math]::Min(16, $bytes.Length))
     if ($head.StartsWith('PK')) {
         Add-Type -AssemblyName System.IO.Compression.FileSystem
-        [IO.Compression.ZipFile]::ExtractToDirectory($Source, $Workspace, $true)
+        $zip = [IO.Compression.ZipFile]::OpenRead($Source)
+        try {
+            $candidates = @($zip.Entries | Where-Object { [IO.Path]::GetFileName($_.FullName) -ieq 'diagnose_enc.tar' })
+            if ($candidates.Count -ne 1) {
+                throw "Expected exactly one diagnose_enc.tar in ZIP; found $($candidates.Count)."
+            }
+            if ($candidates[0].Length -gt $maxArchiveEntryBytes) {
+                throw "diagnose_enc.tar is larger than the allowed limit: $($candidates[0].Length) bytes"
+            }
+            $target = Join-Path $Workspace 'diagnose_enc.tar'
+            $input = $candidates[0].Open()
+            $output = [IO.File]::Open($target, [IO.FileMode]::CreateNew, [IO.FileAccess]::Write, [IO.FileShare]::None)
+            try {
+                $input.CopyTo($output)
+            } finally {
+                $output.Dispose()
+                $input.Dispose()
+            }
+            return $target
+        } finally {
+            $zip.Dispose()
+        }
     } else {
         try {
             Expand-TarArchive -ArchivePath $Source -Destination $Workspace
@@ -375,12 +435,11 @@ function Get-DiagnoseEncPath {
         }
     }
 
-    $found = Get-ChildItem -LiteralPath $Workspace -Recurse -File -Filter 'diagnose_enc.tar' |
-        Select-Object -First 1 -ExpandProperty FullName
-    if (-not $found) {
-        throw 'diagnose_enc.tar was not found in the device export.'
+    $found = @(Get-ChildItem -LiteralPath $Workspace -Recurse -File -Filter 'diagnose_enc.tar')
+    if ($found.Count -ne 1) {
+        throw "Expected exactly one diagnose_enc.tar in the device export; found $($found.Count)."
     }
-    return $found
+    return $found[0].FullName
 }
 
 function Unprotect-DiagnoseContainer {
@@ -389,81 +448,95 @@ function Unprotect-DiagnoseContainer {
         [Parameter(Mandatory)][string]$PlainTarPath
     )
 
-    [byte[]]$container = [IO.File]::ReadAllBytes($EncryptedPath)
     $headerLength = 44
-    if ($container.Length -lt ($headerLength + 256)) {
-        throw 'Encrypted container is truncated.'
-    }
-    if ($container[0] -ne 0x05 -or $container[1] -ne 0x05 -or $container[2] -ne 0x46 -or $container[3] -ne 0x08) {
-        throw 'Encrypted container magic is not supported.'
-    }
+    $sourceStream = [IO.File]::OpenRead($EncryptedPath)
+    try {
+        if ($sourceStream.Length -lt ($headerLength + 256)) {
+            throw 'Encrypted container is truncated.'
+        }
+        [byte[]]$header = [byte[]]::new($headerLength)
+        Read-StreamExactly -Stream $sourceStream -Buffer $header -Offset 0 -Count $headerLength | Out-Null
+        if ($header[0] -ne 0x05 -or $header[1] -ne 0x05 -or $header[2] -ne 0x46 -or $header[3] -ne 0x08) {
+            throw 'Encrypted container magic is not supported.'
+        }
 
-    $version = [int]$container[8]
-    $rsaLength = if ($version -eq 3) { 384 } else { 256 }
+        $version = [int]$header[8]
+        if ($version -notin @(1, 3)) {
+            $inputHash = (Get-FileHash -LiteralPath $EncryptedPath -Algorithm SHA256).Hash.ToLowerInvariant()
+            throw "Unsupported encrypted container version $version (length=$($sourceStream.Length), sha256=$inputHash)."
+        }
+        $rsaLength = if ($version -eq 3) { 384 } else { 256 }
     $keyFile = if ($version -eq 3) { 'rsa-3072.txt' } else { 'rsa-2048.txt' }
     $keyPath = Join-Path $keysDir $keyFile
     if (-not (Test-Path -LiteralPath $keyPath -PathType Leaf)) {
         throw "Compatibility key file not found: $keyPath"
     }
-    if ($container.Length -le ($headerLength + $rsaLength)) {
-        throw 'Encrypted container has no AES payload.'
-    }
-
-    [byte[]]$wrappedMaterial = [byte[]]::new($rsaLength)
-    [Array]::Copy($container, $headerLength, $wrappedMaterial, 0, $rsaLength)
-
-    $rsa = [Security.Cryptography.RSA]::Create()
-    try {
-        $pem = [IO.File]::ReadAllText($keyPath, [Text.Encoding]::ASCII)
-        $base64Key = $pem.Replace('-----BEGIN RSA PRIVATE KEY-----', '').
-            Replace('-----END RSA PRIVATE KEY-----', '') -replace '\s', ''
-        [byte[]]$derKey = [Convert]::FromBase64String($base64Key)
-        $bytesRead = 0
-        $rsa.ImportRSAPrivateKey($derKey, [ref]$bytesRead)
-        if ($bytesRead -ne $derKey.Length) {
-            throw "RSA key import consumed $bytesRead of $($derKey.Length) bytes."
+        if ($sourceStream.Length -le ($headerLength + $rsaLength)) {
+            throw 'Encrypted container has no AES payload.'
         }
-        [byte[]]$aesMaterial = $rsa.Decrypt(
-            $wrappedMaterial,
-            [Security.Cryptography.RSAEncryptionPadding]::OaepSHA1
-        )
-    } finally {
-        $rsa.Dispose()
-    }
-    if ($aesMaterial.Length -lt 32) {
-        throw "Invalid AES material length: $($aesMaterial.Length)"
-    }
 
-    [byte[]]$iv = [byte[]]::new(16)
-    [byte[]]$aesKey = [byte[]]::new(16)
-    [Array]::Copy($aesMaterial, 0, $iv, 0, 16)
-    [Array]::Copy($aesMaterial, 16, $aesKey, 0, 16)
+        [byte[]]$wrappedMaterial = [byte[]]::new($rsaLength)
+        Read-StreamExactly -Stream $sourceStream -Buffer $wrappedMaterial -Offset 0 -Count $rsaLength | Out-Null
 
-    $cipherOffset = $headerLength + $rsaLength
-    $cipherLength = $container.Length - $cipherOffset
-    if (($cipherLength % 16) -ne 0) {
-        throw "AES-CBC payload is not block-aligned: $cipherLength bytes"
-    }
-    [byte[]]$ciphertext = [byte[]]::new($cipherLength)
-    [Array]::Copy($container, $cipherOffset, $ciphertext, 0, $cipherLength)
-
-    $aes = [Security.Cryptography.Aes]::Create()
-    try {
-        $aes.Mode = [Security.Cryptography.CipherMode]::CBC
-        $aes.Padding = [Security.Cryptography.PaddingMode]::PKCS7
-        $aes.Key = $aesKey
-        $aes.IV = $iv
-        $decryptor = $aes.CreateDecryptor()
+        $rsa = [Security.Cryptography.RSA]::Create()
         try {
-            [byte[]]$plain = $decryptor.TransformFinalBlock($ciphertext, 0, $ciphertext.Length)
+            $pem = [IO.File]::ReadAllText($keyPath, [Text.Encoding]::ASCII)
+            $base64Key = $pem.Replace('-----BEGIN RSA PRIVATE KEY-----', '').
+                Replace('-----END RSA PRIVATE KEY-----', '') -replace '\s', ''
+            [byte[]]$derKey = [Convert]::FromBase64String($base64Key)
+            $bytesRead = 0
+            $rsa.ImportRSAPrivateKey($derKey, [ref]$bytesRead)
+            if ($bytesRead -ne $derKey.Length) {
+                throw "RSA key import consumed $bytesRead of $($derKey.Length) bytes."
+            }
+            [byte[]]$aesMaterial = $rsa.Decrypt(
+                $wrappedMaterial,
+                [Security.Cryptography.RSAEncryptionPadding]::OaepSHA1
+            )
         } finally {
-            $decryptor.Dispose()
+            $rsa.Dispose()
+        }
+        if ($aesMaterial.Length -lt 32) {
+            throw "Invalid AES material length: $($aesMaterial.Length)"
+        }
+
+        [byte[]]$iv = [byte[]]::new(16)
+        [byte[]]$aesKey = [byte[]]::new(16)
+        [Array]::Copy($aesMaterial, 0, $iv, 0, 16)
+        [Array]::Copy($aesMaterial, 16, $aesKey, 0, 16)
+
+        $cipherLength = $sourceStream.Length - $headerLength - $rsaLength
+        if (($cipherLength % 16) -ne 0) {
+            throw "AES-CBC payload is not block-aligned: $cipherLength bytes"
+        }
+
+        $aes = [Security.Cryptography.Aes]::Create()
+        try {
+            $aes.Mode = [Security.Cryptography.CipherMode]::CBC
+            $aes.Padding = [Security.Cryptography.PaddingMode]::PKCS7
+            $aes.Key = $aesKey
+            $aes.IV = $iv
+            $decryptor = $aes.CreateDecryptor()
+            $crypto = [Security.Cryptography.CryptoStream]::new(
+                $sourceStream,
+                $decryptor,
+                [Security.Cryptography.CryptoStreamMode]::Read,
+                $true
+            )
+            $plainStream = [IO.File]::Open($PlainTarPath, [IO.FileMode]::Create, [IO.FileAccess]::Write, [IO.FileShare]::None)
+            try {
+                $crypto.CopyTo($plainStream, 65536)
+            } finally {
+                $plainStream.Dispose()
+                $crypto.Dispose()
+                $decryptor.Dispose()
+            }
+        } finally {
+            $aes.Dispose()
         }
     } finally {
-        $aes.Dispose()
+        $sourceStream.Dispose()
     }
-
-    [IO.File]::WriteAllBytes($PlainTarPath, $plain)
     return $version
 }
 
@@ -481,17 +554,15 @@ try {
     $layer2 = Join-Path $work 'layer2'
     New-Item -ItemType Directory -Path $layer1, $layer2 -Force | Out-Null
     Expand-TarArchive -ArchivePath $plainTar -Destination $layer1
-    $exportArchive = Get-ChildItem -LiteralPath $layer1 -Recurse -File -Filter 'exportinfo.tar.gz' |
-        Select-Object -First 1 -ExpandProperty FullName
-    if (-not $exportArchive) {
-        throw 'Decryption succeeded, but exportinfo.tar.gz was not found.'
+    $exportArchives = @(Get-ChildItem -LiteralPath $layer1 -Recurse -File -Filter 'exportinfo.tar.gz')
+    if ($exportArchives.Count -ne 1) {
+        throw "Expected exactly one exportinfo.tar.gz after decryption; found $($exportArchives.Count)."
     }
-    Expand-TarArchive -ArchivePath $exportArchive -Destination $layer2 -GZip
+    Expand-TarArchive -ArchivePath $exportArchives[0].FullName -Destination $layer2 -GZip
 
-    $mobilelog = Get-ChildItem -LiteralPath $layer2 -Recurse -Directory -Filter 'mobilelog' |
-        Select-Object -First 1 -ExpandProperty FullName
-    if (-not $mobilelog) {
-        throw 'exportinfo.tar.gz did not contain a mobilelog directory.'
+    $mobilelogs = @(Get-ChildItem -LiteralPath $layer2 -Recurse -Directory -Filter 'mobilelog')
+    if ($mobilelogs.Count -ne 1) {
+        throw "Expected exactly one mobilelog directory; found $($mobilelogs.Count)."
     }
 
     Write-Host '[4/4] Copying decrypted logs ...' -ForegroundColor Cyan
@@ -503,7 +574,7 @@ try {
         Remove-Item -LiteralPath $finalOut -Recurse -Force
     }
     New-Item -ItemType Directory -Path $finalOut -Force | Out-Null
-    Copy-Item -LiteralPath $mobilelog -Destination (Join-Path $finalOut 'mobilelog') -Recurse
+    Copy-Item -LiteralPath $mobilelogs[0].FullName -Destination (Join-Path $finalOut 'mobilelog') -Recurse
 
     Write-Host ''
     Write-Host "Decryption complete (format version $formatVersion)." -ForegroundColor Green
