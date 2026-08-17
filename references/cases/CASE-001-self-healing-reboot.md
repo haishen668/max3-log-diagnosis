@@ -1,17 +1,10 @@
-# CASE-001: 固件自愈重启（system self-healing）
+# CASE-001: 网络检测触发自愈重启
 
-- 设备型号：IC5980 / CPE-MAX3-V4.x
-- 固件版本：11.0.0.185(H72SP1C00)
-- 症状：设备不定期自动重启，业务全部中断，用户无感知原因
-- 根因：固件/应用层触发的自愈重启策略。日志记录 abnormal reboot => system self-healing，pstore 有完整受控重启序列（self-healing → stop feed watchdog → Restarting system）。非断电、非内核 panic。具体触发条件需厂商提供原因码。
-- 关键日志特征：
-  - kmsg.log 首行：[reb]: abnormal reboot=> system self-healing
-  - pstore/console-ramoops：[NNNN] self-healing → [WTD] reboot stop feed watchdog, event = 1 → reboot: Restarting system
-  - 多个独立启动会话出现同一原因
-- 建议：
-  1. 向厂商提交诊断包，索要 self-healing 触发条件和原因码
-  2. 核查 WebUI 的定时重启/健康检测配置，排除误配置
-  3. 排查供电、散热
-  4. 锁频段/锁小区无效，不能作为自愈重启的修复手段
-- 验证状态：未验证（仅有日志诊断结论，未确认建议方案是否解决问题）
-- 日期：2026-08-03
+- 设备：IC5980 / CPE-MAX3，固件 `11.0.0.185(H72SP1C00)`
+- 症状：设备不定期重启，业务中断
+- 机制：WebUI“高级设置 → 系统 → 网络检测”定时 ping 目标地址；持续不可达时按配置触发自愈重启
+- 证据：`abnormal reboot=> system self-healing`、`stop feed watchdog`、`Restarting system`
+- 建议：检查检测目标的稳定性和 ICMP 可达性；根据业务容忍度调整或关闭网络检测；继续排查造成真实断网的注册、拨号、信号、SIM 和供电问题
+- 边界：锁频段或锁小区不能修复网络检测机制本身
+- 验证状态：触发机制已由用户确认；配置调整效果未验证
+- 日期：2026-08-13

@@ -1,25 +1,22 @@
 <#
 .SYNOPSIS
-  IC5980 加密诊断包一键解密工具
+  IC5980 / CPE-MAX3 diagnostic package decryptor.
 
 .DESCRIPTION
-  输入 IC5980 下载的 .zip / .tar 包（内部含 var/diagnose_enc.tar 加密文件），
-  自动判断格式、解包、调用 dfx_common_new.exe 解密，输出明文日志目录路径。
+  Decrypts diagnose_enc.tar using the format implemented by dfx_common_new.exe:
+  a 44-byte container header, RSA-OAEP wrapped AES material, AES-128-CBC payload,
+  and PKCS#7 padding. It then extracts diagnose.tar and exportinfo.tar.gz with
+  a built-in safe tar reader. No vendor executable, Python runtime, or tar command
+  is required.
 
 .PARAMETER InputPath
-  IC5980 诊断包路径（.zip 或 .tar，下载下来的原始文件）。
-
-.PARAMETER ToolDir
-  dfx_common_new.exe 所在目录（默认脚本同级的 decrypt-tool 子目录）。
+  Device export (.zip/.tar containing var/diagnose_enc.tar), or diagnose_enc.tar itself.
 
 .PARAMETER OutDir
-  解密结果输出目录（默认 Desktop\IC5980-Decrypted）。
+  Parent output directory. Defaults to Desktop\IC5980-Decrypted.
 
-.EXAMPLE
-  .\Decrypt-IC5980.ps1 'C:\Downloads\IC5980_xxxx_20260813101710.zip'
-
-.EXAMPLE
-  .\Decrypt-IC5980.ps1 'C:\Downloads\IC5980_xxxx.zip' -OutDir 'D:\logs'
+.PARAMETER Force
+  Replace an existing output directory for the same package name.
 #>
 [CmdletBinding()]
 param(
@@ -27,150 +24,493 @@ param(
     [string]$InputPath,
 
     [Parameter(Position = 1)]
-    [string]$ToolDir,
+    [string]$OutDir,
 
-    [Parameter(Position = 2)]
-    [string]$OutDir
+    [switch]$Force
 )
 
 $ErrorActionPreference = 'Stop'
 
-if (-not (Test-Path -LiteralPath $InputPath)) {
-    Write-Error "找不到输入文件: $InputPath"
-    exit 1
+if ($PSVersionTable.PSVersion.Major -lt 7) {
+    throw 'Decrypt-IC5980.ps1 requires PowerShell 7 or later.'
+}
+if (-not (Test-Path -LiteralPath $InputPath -PathType Leaf)) {
+    throw "Input file not found: $InputPath"
 }
 $InputPath = (Resolve-Path -LiteralPath $InputPath).Path
-
-if (-not $ToolDir) {
-    $ToolDir = Join-Path $PSScriptRoot 'decrypt-tool'
-}
-if (-not (Test-Path -LiteralPath $ToolDir)) {
-    Write-Error "找不到解密工具目录: $ToolDir`n请把 dfx_common_new.exe、7za.exe 和两个 XML 放到该目录。"
-    exit 1
-}
-
-$exe   = Join-Path $ToolDir 'dfx_common_new.exe'
-$sevenZ = Join-Path $ToolDir '7za.exe'
-foreach ($f in @($exe, $sevenZ)) {
-    if (-not (Test-Path -LiteralPath $f)) {
-        Write-Error "工具目录缺少文件: $f"
-        exit 1
-    }
-}
-
 if (-not $OutDir) {
-    $OutDir = Join-Path ([Environment]::GetFolderPath('Desktop')) 'IC5980-Decrypted'
+    $defaultParent = [Environment]::GetFolderPath('Desktop')
+    if (-not $defaultParent) {
+        $defaultParent = (Get-Location).Path
+    }
+    $OutDir = Join-Path $defaultParent 'IC5980-Decrypted'
 }
 
 $baseName = [IO.Path]::GetFileNameWithoutExtension($InputPath)
-$work = Join-Path ([IO.Path]::GetTempPath()) ("ic5980_" + $baseName)
-if (Test-Path -LiteralPath $work) { Remove-Item -Recurse -Force -LiteralPath $work }
-New-Item -ItemType Directory -Force -Path $work | Out-Null
+$work = Join-Path ([IO.Path]::GetTempPath()) ("max3-lite-{0}" -f [guid]::NewGuid().ToString('N'))
+$keysDir = Join-Path $PSScriptRoot 'keys'
 
-$staging = Join-Path $work 'staging'
-$varDir  = Join-Path $staging 'var'
-New-Item -ItemType Directory -Force -Path $varDir | Out-Null
+function Read-StreamExactly {
+    param(
+        [Parameter(Mandatory)][IO.Stream]$Stream,
+        [Parameter(Mandatory)][byte[]]$Buffer,
+        [Parameter(Mandatory)][int]$Offset,
+        [Parameter(Mandatory)][int]$Count,
+        [switch]$AllowEndOfStream
+    )
 
-Write-Host '[1/4] 读取输入文件并提取 diagnose_enc.tar ...' -ForegroundColor Cyan
-
-$bytes = [IO.File]::ReadAllBytes($InputPath)
-$head  = [Text.Encoding]::ASCII.GetString($bytes[0..15])
-
-$encTar = $null
-if ($head.StartsWith('var/') -or $head.StartsWith('var\')) {
-    # 输入本身就是 tar
-    tar -xf $InputPath -C $work 'var/diagnose_enc.tar' 2>$null
-    $encTar = Join-Path $work 'var\diagnose_enc.tar'
-    if (-not (Test-Path -LiteralPath $encTar)) {
-        # tar 解压到 work/var 下
-        tar -xf $InputPath -C $work
-        $encTar = Get-ChildItem -LiteralPath $work -Recurse -Filter 'diagnose_enc.tar' | Select-Object -First 1 -ExpandProperty FullName
+    $total = 0
+    while ($total -lt $Count) {
+        $read = $Stream.Read($Buffer, $Offset + $total, $Count - $total)
+        if ($read -eq 0) {
+            if ($AllowEndOfStream -and $total -eq 0) {
+                return $false
+            }
+            throw "Unexpected end of archive stream after $total of $Count bytes."
+        }
+        $total += $read
     }
-} elseif ($head.Substring(0,2) -eq 'PK') {
-    # 输入是 zip
-    Add-Type -AssemblyName System.IO.Compression.FileSystem
-    [System.IO.Compression.ZipFile]::ExtractToDirectory($InputPath, $work, $true)
-    $encTar = Get-ChildItem -LiteralPath $work -Recurse -Filter 'diagnose_enc.tar' | Select-Object -First 1 -ExpandProperty FullName
-} else {
-    Write-Error "无法识别的文件格式。前16字节: $head"
-    exit 1
+    return $true
 }
 
-if (-not $encTar -or -not (Test-Path -LiteralPath $encTar)) {
-    Write-Error '未在输入文件中找到 diagnose_enc.tar'
-    exit 1
+function Get-TarString {
+    param(
+        [Parameter(Mandatory)][byte[]]$Buffer,
+        [Parameter(Mandatory)][int]$Offset,
+        [Parameter(Mandatory)][int]$Length
+    )
+
+    $end = $Offset
+    $limit = $Offset + $Length
+    while ($end -lt $limit -and $Buffer[$end] -ne 0) {
+        $end++
+    }
+    if ($end -eq $Offset) {
+        return ''
+    }
+    return [Text.Encoding]::UTF8.GetString($Buffer, $Offset, $end - $Offset).Trim()
 }
-Write-Host "      -> $encTar"
 
-Write-Host '[2/4] 构建 dfx 工具所需的 zip 结构 ...' -ForegroundColor Cyan
-Copy-Item -LiteralPath $encTar -Destination (Join-Path $varDir 'diagnose_enc.tar') -Force
+function Get-TarNumber {
+    param(
+        [Parameter(Mandatory)][byte[]]$Buffer,
+        [Parameter(Mandatory)][int]$Offset,
+        [Parameter(Mandatory)][int]$Length
+    )
 
-$zipName = $baseName + '.zip'
-$zipPath = Join-Path $work $zipName
-Push-Location $staging
+    if (($Buffer[$Offset] -band 0x80) -ne 0) {
+        [long]$value = $Buffer[$Offset] -band 0x7f
+        for ($index = 1; $index -lt $Length; $index++) {
+            $value = ($value -shl 8) -bor $Buffer[$Offset + $index]
+        }
+        return $value
+    }
+
+    $text = (Get-TarString -Buffer $Buffer -Offset $Offset -Length $Length).Trim()
+    if (-not $text) {
+        return [long]0
+    }
+    try {
+        return [Convert]::ToInt64($text, 8)
+    } catch {
+        throw "Invalid tar numeric field: '$text'"
+    }
+}
+
+function Read-TarPayloadBytes {
+    param(
+        [Parameter(Mandatory)][IO.Stream]$Stream,
+        [Parameter(Mandatory)][long]$Size
+    )
+
+    if ($Size -gt [int]::MaxValue) {
+        throw "Tar metadata entry is too large: $Size bytes"
+    }
+    [byte[]]$data = [byte[]]::new([int]$Size)
+    if ($Size -gt 0) {
+        Read-StreamExactly -Stream $Stream -Buffer $data -Offset 0 -Count ([int]$Size) | Out-Null
+    }
+    return ,$data
+}
+
+function Skip-TarPadding {
+    param(
+        [Parameter(Mandatory)][IO.Stream]$Stream,
+        [Parameter(Mandatory)][long]$Size
+    )
+
+    $padding = [int]((512 - ($Size % 512)) % 512)
+    if ($padding -gt 0) {
+        [byte[]]$discard = [byte[]]::new($padding)
+        Read-StreamExactly -Stream $Stream -Buffer $discard -Offset 0 -Count $padding | Out-Null
+    }
+}
+
+function Copy-TarPayload {
+    param(
+        [Parameter(Mandatory)][IO.Stream]$InputStream,
+        [Parameter(Mandatory)][IO.Stream]$OutputStream,
+        [Parameter(Mandatory)][long]$Size
+    )
+
+    [byte[]]$buffer = [byte[]]::new(65536)
+    [long]$remaining = $Size
+    while ($remaining -gt 0) {
+        $count = [int][Math]::Min($buffer.Length, $remaining)
+        Read-StreamExactly -Stream $InputStream -Buffer $buffer -Offset 0 -Count $count | Out-Null
+        $OutputStream.Write($buffer, 0, $count)
+        $remaining -= $count
+    }
+}
+
+function Get-SafeTarTargetPath {
+    param(
+        [Parameter(Mandatory)][string]$Destination,
+        [Parameter(Mandatory)][string]$EntryPath
+    )
+
+    $normalized = $EntryPath.Replace('\', '/')
+    while ($normalized.StartsWith('./')) {
+        $normalized = $normalized.Substring(2)
+    }
+    if (-not $normalized -or $normalized.StartsWith('/')) {
+        throw "Unsafe tar entry path: '$EntryPath'"
+    }
+
+    $root = [IO.Path]::GetFullPath($Destination)
+    $invalidChars = [IO.Path]::GetInvalidFileNameChars()
+    $safeSegments = foreach ($segment in $normalized.Split('/')) {
+        if (-not $segment -or $segment -eq '.') {
+            continue
+        }
+        if ($segment -eq '..') {
+            throw "Tar entry escapes destination: '$EntryPath'"
+        }
+
+        $builder = [Text.StringBuilder]::new($segment.Length)
+        foreach ($character in $segment.ToCharArray()) {
+            if ($character -eq ':' -or $invalidChars -contains $character) {
+                $null = $builder.Append('_')
+            } else {
+                $null = $builder.Append($character)
+            }
+        }
+        $safeSegment = $builder.ToString()
+        if (-not $safeSegment) {
+            throw "Unsafe tar entry path: '$EntryPath'"
+        }
+        $safeSegment
+    }
+    if (-not $safeSegments) {
+        throw "Unsafe tar entry path: '$EntryPath'"
+    }
+
+    $relative = $safeSegments -join [IO.Path]::DirectorySeparatorChar
+    $target = [IO.Path]::GetFullPath((Join-Path $root $relative))
+    $rootPrefix = $root.TrimEnd([IO.Path]::DirectorySeparatorChar, [IO.Path]::AltDirectorySeparatorChar) + [IO.Path]::DirectorySeparatorChar
+    if (-not $target.StartsWith($rootPrefix, [StringComparison]::OrdinalIgnoreCase)) {
+        throw "Tar entry escapes destination: '$EntryPath'"
+    }
+    return $target
+}
+
+function Get-PaxPath {
+    param([Parameter(Mandatory)][byte[]]$Data)
+
+    $text = [Text.Encoding]::UTF8.GetString($Data)
+    foreach ($line in $text -split "`n") {
+        $separator = $line.IndexOf(' ')
+        if ($separator -lt 0) {
+            continue
+        }
+        $record = $line.Substring($separator + 1).TrimEnd("`r")
+        if ($record.StartsWith('path=')) {
+            return $record.Substring(5)
+        }
+    }
+    return $null
+}
+
+function Expand-TarStream {
+    param(
+        [Parameter(Mandatory)][IO.Stream]$Stream,
+        [Parameter(Mandatory)][string]$Destination
+    )
+
+    [IO.Directory]::CreateDirectory($Destination) | Out-Null
+    [byte[]]$header = [byte[]]::new(512)
+    $pendingPath = $null
+
+    while (Read-StreamExactly -Stream $Stream -Buffer $header -Offset 0 -Count 512 -AllowEndOfStream) {
+        $hasContent = $false
+        foreach ($value in $header) {
+            if ($value -ne 0) {
+                $hasContent = $true
+                break
+            }
+        }
+        if (-not $hasContent) {
+            break
+        }
+
+        $name = Get-TarString -Buffer $header -Offset 0 -Length 100
+        $prefix = Get-TarString -Buffer $header -Offset 345 -Length 155
+        if ($prefix) {
+            $name = "$prefix/$name"
+        }
+        $size = Get-TarNumber -Buffer $header -Offset 124 -Length 12
+        $typeFlag = [char]$header[156]
+
+        if ($typeFlag -eq 'L') {
+            $longNameData = Read-TarPayloadBytes -Stream $Stream -Size $size
+            $pendingPath = [Text.Encoding]::UTF8.GetString($longNameData).
+                Trim([char[]]@([char]0, [char]13, [char]10))
+            Skip-TarPadding -Stream $Stream -Size $size
+            continue
+        }
+        if ($typeFlag -eq 'x' -or $typeFlag -eq 'g') {
+            $paxData = Read-TarPayloadBytes -Stream $Stream -Size $size
+            $paxPath = Get-PaxPath -Data $paxData
+            if ($paxPath) {
+                $pendingPath = $paxPath
+            }
+            Skip-TarPadding -Stream $Stream -Size $size
+            continue
+        }
+
+        $entryPath = if ($pendingPath) { $pendingPath } else { $name }
+        $pendingPath = $null
+
+        if ($typeFlag -eq '5') {
+            $directoryPath = Get-SafeTarTargetPath -Destination $Destination -EntryPath $entryPath
+            [IO.Directory]::CreateDirectory($directoryPath) | Out-Null
+        } elseif ($typeFlag -eq '0' -or $typeFlag -eq [char]0) {
+            $filePath = Get-SafeTarTargetPath -Destination $Destination -EntryPath $entryPath
+            $parent = [IO.Path]::GetDirectoryName($filePath)
+            if ($parent) {
+                [IO.Directory]::CreateDirectory($parent) | Out-Null
+            }
+            $output = [IO.File]::Open($filePath, [IO.FileMode]::Create, [IO.FileAccess]::Write, [IO.FileShare]::None)
+            try {
+                Copy-TarPayload -InputStream $Stream -OutputStream $output -Size $size
+            } finally {
+                $output.Dispose()
+            }
+        } else {
+            if ($size -gt 0) {
+                [byte[]]$discard = [byte[]]::new(65536)
+                [long]$remaining = $size
+                while ($remaining -gt 0) {
+                    $count = [int][Math]::Min($discard.Length, $remaining)
+                    Read-StreamExactly -Stream $Stream -Buffer $discard -Offset 0 -Count $count | Out-Null
+                    $remaining -= $count
+                }
+            }
+        }
+        Skip-TarPadding -Stream $Stream -Size $size
+    }
+}
+
+function Expand-TarArchive {
+    param(
+        [Parameter(Mandatory)][string]$ArchivePath,
+        [Parameter(Mandatory)][string]$Destination,
+        [switch]$GZip
+    )
+
+    $fileStream = [IO.File]::OpenRead($ArchivePath)
+    try {
+        if ($GZip) {
+            $archiveStream = [IO.Compression.GZipStream]::new(
+                $fileStream,
+                [IO.Compression.CompressionMode]::Decompress,
+                $true
+            )
+            try {
+                Expand-TarStream -Stream $archiveStream -Destination $Destination
+            } finally {
+                $archiveStream.Dispose()
+            }
+        } else {
+            Expand-TarStream -Stream $fileStream -Destination $Destination
+        }
+    } finally {
+        $fileStream.Dispose()
+    }
+}
+
+function Get-DiagnoseEncPath {
+    param(
+        [Parameter(Mandatory)][string]$Source,
+        [Parameter(Mandatory)][string]$Workspace
+    )
+
+    $sourceStream = [IO.File]::OpenRead($Source)
+    try {
+        [byte[]]$bytes = [byte[]]::new([int][Math]::Min(512, $sourceStream.Length))
+        if ($bytes.Length -gt 0) {
+            Read-StreamExactly -Stream $sourceStream -Buffer $bytes -Offset 0 -Count $bytes.Length | Out-Null
+        }
+    } finally {
+        $sourceStream.Dispose()
+    }
+    if ($bytes.Length -lt 16) {
+        throw 'Input file is too short.'
+    }
+
+    # Raw encrypted container: 05 05 46 08 ...
+    if ($bytes[0] -eq 0x05 -and $bytes[1] -eq 0x05 -and $bytes[2] -eq 0x46 -and $bytes[3] -eq 0x08) {
+        return $Source
+    }
+
+    $head = [Text.Encoding]::ASCII.GetString($bytes, 0, [Math]::Min(16, $bytes.Length))
+    if ($head.StartsWith('PK')) {
+        Add-Type -AssemblyName System.IO.Compression.FileSystem
+        [IO.Compression.ZipFile]::ExtractToDirectory($Source, $Workspace, $true)
+    } else {
+        try {
+            Expand-TarArchive -ArchivePath $Source -Destination $Workspace
+        } catch {
+            throw ('Unsupported input format or invalid tar archive. First 16 bytes: {0}. {1}' -f [Convert]::ToHexString($bytes[0..15]), $_.Exception.Message)
+        }
+    }
+
+    $found = Get-ChildItem -LiteralPath $Workspace -Recurse -File -Filter 'diagnose_enc.tar' |
+        Select-Object -First 1 -ExpandProperty FullName
+    if (-not $found) {
+        throw 'diagnose_enc.tar was not found in the device export.'
+    }
+    return $found
+}
+
+function Unprotect-DiagnoseContainer {
+    param(
+        [Parameter(Mandatory)][string]$EncryptedPath,
+        [Parameter(Mandatory)][string]$PlainTarPath
+    )
+
+    [byte[]]$container = [IO.File]::ReadAllBytes($EncryptedPath)
+    $headerLength = 44
+    if ($container.Length -lt ($headerLength + 256)) {
+        throw 'Encrypted container is truncated.'
+    }
+    if ($container[0] -ne 0x05 -or $container[1] -ne 0x05 -or $container[2] -ne 0x46 -or $container[3] -ne 0x08) {
+        throw 'Encrypted container magic is not supported.'
+    }
+
+    $version = [int]$container[8]
+    $rsaLength = if ($version -eq 3) { 384 } else { 256 }
+    $keyFile = if ($version -eq 3) { 'rsa-3072.pem' } else { 'rsa-2048.pem' }
+    $keyPath = Join-Path $keysDir $keyFile
+    if (-not (Test-Path -LiteralPath $keyPath -PathType Leaf)) {
+        throw "Compatibility key file not found: $keyPath"
+    }
+    if ($container.Length -le ($headerLength + $rsaLength)) {
+        throw 'Encrypted container has no AES payload.'
+    }
+
+    [byte[]]$wrappedMaterial = [byte[]]::new($rsaLength)
+    [Array]::Copy($container, $headerLength, $wrappedMaterial, 0, $rsaLength)
+
+    $rsa = [Security.Cryptography.RSA]::Create()
+    try {
+        $pem = [IO.File]::ReadAllText($keyPath, [Text.Encoding]::ASCII)
+        $base64Key = $pem.Replace('-----BEGIN RSA PRIVATE KEY-----', '').
+            Replace('-----END RSA PRIVATE KEY-----', '') -replace '\s', ''
+        [byte[]]$derKey = [Convert]::FromBase64String($base64Key)
+        $bytesRead = 0
+        $rsa.ImportRSAPrivateKey($derKey, [ref]$bytesRead)
+        if ($bytesRead -ne $derKey.Length) {
+            throw "RSA key import consumed $bytesRead of $($derKey.Length) bytes."
+        }
+        [byte[]]$aesMaterial = $rsa.Decrypt(
+            $wrappedMaterial,
+            [Security.Cryptography.RSAEncryptionPadding]::OaepSHA1
+        )
+    } finally {
+        $rsa.Dispose()
+    }
+    if ($aesMaterial.Length -lt 32) {
+        throw "Invalid AES material length: $($aesMaterial.Length)"
+    }
+
+    [byte[]]$iv = [byte[]]::new(16)
+    [byte[]]$aesKey = [byte[]]::new(16)
+    [Array]::Copy($aesMaterial, 0, $iv, 0, 16)
+    [Array]::Copy($aesMaterial, 16, $aesKey, 0, 16)
+
+    $cipherOffset = $headerLength + $rsaLength
+    $cipherLength = $container.Length - $cipherOffset
+    if (($cipherLength % 16) -ne 0) {
+        throw "AES-CBC payload is not block-aligned: $cipherLength bytes"
+    }
+    [byte[]]$ciphertext = [byte[]]::new($cipherLength)
+    [Array]::Copy($container, $cipherOffset, $ciphertext, 0, $cipherLength)
+
+    $aes = [Security.Cryptography.Aes]::Create()
+    try {
+        $aes.Mode = [Security.Cryptography.CipherMode]::CBC
+        $aes.Padding = [Security.Cryptography.PaddingMode]::PKCS7
+        $aes.Key = $aesKey
+        $aes.IV = $iv
+        $decryptor = $aes.CreateDecryptor()
+        try {
+            [byte[]]$plain = $decryptor.TransformFinalBlock($ciphertext, 0, $ciphertext.Length)
+        } finally {
+            $decryptor.Dispose()
+        }
+    } finally {
+        $aes.Dispose()
+    }
+
+    [IO.File]::WriteAllBytes($PlainTarPath, $plain)
+    return $version
+}
+
+New-Item -ItemType Directory -Path $work -Force | Out-Null
 try {
-    & $sevenZ a -tzip $zipPath 'var\diagnose_enc.tar' 2>&1 | Out-Null
+    Write-Host '[1/4] Locating diagnose_enc.tar ...' -ForegroundColor Cyan
+    $encryptedPath = Get-DiagnoseEncPath -Source $InputPath -Workspace $work
+
+    Write-Host '[2/4] Decrypting RSA-OAEP + AES-CBC container ...' -ForegroundColor Cyan
+    $plainTar = Join-Path $work 'diagnose.tar'
+    $formatVersion = Unprotect-DiagnoseContainer -EncryptedPath $encryptedPath -PlainTarPath $plainTar
+
+    Write-Host '[3/4] Extracting diagnose.tar and exportinfo.tar.gz ...' -ForegroundColor Cyan
+    $layer1 = Join-Path $work 'layer1'
+    $layer2 = Join-Path $work 'layer2'
+    New-Item -ItemType Directory -Path $layer1, $layer2 -Force | Out-Null
+    Expand-TarArchive -ArchivePath $plainTar -Destination $layer1
+    $exportArchive = Get-ChildItem -LiteralPath $layer1 -Recurse -File -Filter 'exportinfo.tar.gz' |
+        Select-Object -First 1 -ExpandProperty FullName
+    if (-not $exportArchive) {
+        throw 'Decryption succeeded, but exportinfo.tar.gz was not found.'
+    }
+    Expand-TarArchive -ArchivePath $exportArchive -Destination $layer2 -GZip
+
+    $mobilelog = Get-ChildItem -LiteralPath $layer2 -Recurse -Directory -Filter 'mobilelog' |
+        Select-Object -First 1 -ExpandProperty FullName
+    if (-not $mobilelog) {
+        throw 'exportinfo.tar.gz did not contain a mobilelog directory.'
+    }
+
+    Write-Host '[4/4] Copying decrypted logs ...' -ForegroundColor Cyan
+    $finalOut = Join-Path $OutDir $baseName
+    if (Test-Path -LiteralPath $finalOut) {
+        if (-not $Force) {
+            throw "Output already exists: $finalOut (use -Force to replace it)"
+        }
+        Remove-Item -LiteralPath $finalOut -Recurse -Force
+    }
+    New-Item -ItemType Directory -Path $finalOut -Force | Out-Null
+    Copy-Item -LiteralPath $mobilelog -Destination (Join-Path $finalOut 'mobilelog') -Recurse
+
+    Write-Host ''
+    Write-Host "Decryption complete (format version $formatVersion)." -ForegroundColor Green
+    Write-Host "Logs: $finalOut\mobilelog" -ForegroundColor Yellow
+    return $finalOut
 } finally {
-    Pop-Location
+    if (Test-Path -LiteralPath $work) {
+        Remove-Item -LiteralPath $work -Recurse -Force -ErrorAction SilentlyContinue
+    }
 }
-
-Write-Host '[3/4] 调用 dfx_common_new.exe 解密 ...' -ForegroundColor Cyan
-
-# 工具把 decompress 输出到 exe 所在目录，所以直接在 ToolDir 内操作
-Copy-Item -LiteralPath $zipPath -Destination (Join-Path $ToolDir $zipName) -Force
-
-# 清理上次的 decompress 残留
-$oldDecompress = Join-Path $ToolDir 'decompress'
-if (Test-Path -LiteralPath $oldDecompress) { Remove-Item -Recurse -Force -LiteralPath $oldDecompress }
-
-$logFile = Join-Path $work 'dfx-output.txt'
-$proc = Start-Process -FilePath $exe -ArgumentList '-p', (Join-Path $ToolDir $zipName) `
-    -NoNewWindow -PassThru -Wait `
-    -WorkingDirectory $ToolDir `
-    -RedirectStandardOutput $logFile `
-    -RedirectStandardError (Join-Path $work 'dfx-error.txt')
-
-# 清理 ToolDir 里的临时 zip
-Remove-Item -LiteralPath (Join-Path $ToolDir $zipName) -Force -ErrorAction SilentlyContinue
-
-if ($proc.ExitCode -ne 0) {
-    Write-Host (Get-Content -LiteralPath $logFile -Raw -ErrorAction SilentlyContinue) -ForegroundColor DarkGray
-    Write-Error "dfx_common_new.exe 退出码: $($proc.ExitCode)"
-    exit 1
-}
-
-$decryptedRoot = Join-Path $ToolDir ("decompress\" + $zipName)
-if (-not (Test-Path -LiteralPath $decryptedRoot)) {
-    Write-Error "解密完成但未找到输出目录: $decryptedRoot"
-    exit 1
-}
-
-Write-Host '[4/4] 复制解密结果到输出目录 ...' -ForegroundColor Cyan
-$finalOut = Join-Path $OutDir $baseName
-if (Test-Path -LiteralPath $finalOut) { Remove-Item -Recurse -Force -LiteralPath $finalOut }
-New-Item -ItemType Directory -Force -Path $finalOut | Out-Null
-
-$mobilelog = Get-ChildItem -LiteralPath $decryptedRoot -Recurse -Directory -Filter 'mobilelog' |
-    Select-Object -First 1 -ExpandProperty FullName
-if ($mobilelog) {
-    Copy-Item -Recurse -LiteralPath $mobilelog -Destination (Join-Path $finalOut 'mobilelog')
-} else {
-    Copy-Item -Recurse -LiteralPath $decryptedRoot -Destination $finalOut
-}
-
-Write-Host ''
-Write-Host '解密完成。' -ForegroundColor Green
-Write-Host "日志目录: $finalOut\mobilelog" -ForegroundColor Yellow
-Write-Host ''
-Write-Host '常用子目录:' -ForegroundColor DarkGray
-Write-Host '  log\          应用日志 (app.log-*.gz)' -ForegroundColor DarkGray
-Write-Host '  kernel\       内核日志 (kmsg.log-*.gz)' -ForegroundColor DarkGray
-Write-Host '  pstore\       重启记录 (console-ramoops)' -ForegroundColor DarkGray
-Write-Host '  modem_log\    基带日志' -ForegroundColor DarkGray
-Write-Host ''
-Write-Host '提示: 临时工作目录可安全删除' -ForegroundColor DarkGray
-Write-Host "  $work" -ForegroundColor DarkGray
-
-Remove-Item -Recurse -Force -LiteralPath $work -ErrorAction SilentlyContinue
-
-return $finalOut
